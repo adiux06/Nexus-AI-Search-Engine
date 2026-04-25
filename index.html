@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexusAI Search</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, system-ui, sans-serif;
+        background: #0a0a0a;
+      }
+
+      html,
+      body,
+      #root {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 35%),
+          radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.12), transparent 35%),
+          #0a0a0a;
+        color: #f3f4f6;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 0 0 0 rgba(59, 130, 246, 0); }
+        50% { box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 0 0 30px 0 rgba(59, 130, 246, 0.3); }
+      }
+
+      @keyframes gradient-text {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      .boot-fallback {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .boot-card {
+        max-width: 36rem;
+        padding: 24px;
+        border-radius: 24px;
+        background: rgba(17, 17, 17, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+        animation: float 4s ease-in-out infinite, pulse-glow 2s ease-in-out infinite;
+      }
+
+      .boot-card h1 {
+        margin: 0 0 12px;
+        font-size: clamp(2rem, 5vw, 3rem);
+        background: linear-gradient(to right, #60a5fa, #818cf8, #60a5fa);
+        background-size: 200% auto;
+        color: transparent;
+        -webkit-background-clip: text;
+        background-clip: text;
+        animation: gradient-text 3s linear infinite;
+      }
+
+      .boot-card p {
+        margin: 0;
+        line-height: 1.6;
+        color: rgba(243, 244, 246, 0.72);
+      }
+
+      .boot-card code {
+        background: rgba(59, 130, 246, 0.14);
+        border-radius: 999px;
+        padding: 0.15rem 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="boot-fallback">
+        <div class="boot-card">
+          <h1>NexusAI is starting...</h1>
+          <p>If this stays on screen, run <code>npm install</code> and <code>npm run dev</code> instead of opening <code>index.html</code> directly.</p>
+        </div>
+      </div>
+    </div>
+    <noscript>
+      <div class="boot-fallback">
+        <div class="boot-card">
+          <h1>JavaScript is required</h1>
+          <p>This app needs JavaScript enabled to render the React interface.</p>
+        </div>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "Nexus Search",
+  "description": "A modern live search interface with fast results, summaries, and fallback search handling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
