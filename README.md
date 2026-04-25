@@ -1,53 +1,51 @@
 # 🔍 NexusAI Search
 
-> Modern AI-powered search system with hybrid retrieval and real-time answer generation.
+> AI-powered search system with hybrid retrieval and real-time answer generation.
 
 ---
 
 ## 🚀 Overview
 
-**NexusAI Search** is a next-generation search system that goes beyond traditional keyword matching by combining:
+**NexusAI Search** is a modern AI search interface that combines traditional search techniques with large language models to deliver **relevant results and direct answers**.
 
-* ⚡ Fast keyword-based retrieval
-* 🧠 Semantic understanding of queries
-* 🤖 AI-generated answers
-
-Instead of just returning links, NexusAI provides **relevant results + a clear, human-readable answer**.
+Unlike traditional search engines, it focuses on **understanding intent and summarizing information**, not just matching keywords.
 
 ---
 
-## 🧠 What Makes This Different
+## 🧠 Core Idea
 
-Unlike traditional search engines:
+The system integrates:
 
-* ✅ Understands **meaning**, not just keywords
-* ✅ Combines **keyword + semantic search (hybrid retrieval)**
-* ✅ Generates **context-aware answers (RAG-style)**
-* ✅ Provides **confidence and sources**
+* ⚡ Keyword-based retrieval (fast matching)
+* 🧠 Semantic scoring (meaning-based relevance)
+* 🤖 AI-generated answers (LLM)
+
+This creates a **hybrid search pipeline**, similar to modern AI search systems.
 
 ---
 
 ## ⚙️ How It Works
 
 1. User enters a query
-2. System retrieves results using:
+2. API processes the query
+3. Results are retrieved using:
 
    * keyword matching
-   * semantic similarity
-3. Results are ranked using hybrid scoring
-4. Top results are used as context
-5. AI generates a clean answer
+   * semantic relevance scoring
+4. Top results are selected
+5. Context is sent to LLM
+6. AI generates a clean answer
 
 ---
 
 ## ✨ Features
 
 * 🔍 Hybrid Search (Keyword + Semantic)
-* 🤖 AI Answer Generation
+* 🤖 AI Answer Generation (RAG-style)
 * 💡 Smart Suggestions & Autocomplete
 * 📊 Confidence Score
 * 🔗 Source Attribution
-* ⚡ Fast React-based UI
+* ⚡ Fast React UI
 
 ---
 
@@ -60,7 +58,7 @@ User Query
 Frontend (React)
    │
    ▼
-API (/api/search)
+API Layer
    │
    ├── Keyword Matching
    ├── Semantic Scoring
@@ -78,39 +76,35 @@ Final Answer + Sources
 
 ## ⚙️ Tech Stack
 
-### Frontend
+**Frontend**
 
 * React + TypeScript
 * Tailwind CSS
 * Vite
 
-### Backend
+**Backend**
 
-* Node.js / API routes
+* Node.js API routes
 
-### AI
+**AI**
 
 * LLM API (Gemini / OpenAI)
-* Semantic scoring logic
+* Custom hybrid ranking logic
 
 ---
 
 ## 📦 Installation
 
-### 1. Clone Repository
-
 ```bash
 git clone https://github.com/adiux06/Nexus-AI-Search-Engine.git
 cd Nexus-AI-Search-Engine
-```
-
-### 2. Install Dependencies
-
-```bash
 npm install
+npm run dev
 ```
 
-### 3. Setup Environment Variables
+---
+
+## 🔐 Environment Variables
 
 Create `.env.local`:
 
@@ -118,17 +112,7 @@ Create `.env.local`:
 VITE_GEMINI_API_KEY=your_api_key_here
 ```
 
-> ⚠️ Do NOT commit this file
-
----
-
-### 4. Run the App
-
-```bash
-npm run dev
-```
-
-👉 Open: http://localhost:3000
+⚠️ Never push this file to GitHub.
 
 ---
 
@@ -137,33 +121,26 @@ npm run dev
 **Query:**
 `What does "hi" mean?`
 
-**Output:**
-
-> “'Hi' is an informal greeting commonly used to say hello in casual conversations. It is widely used in everyday communication and may also have other meanings depending on context.”
+**Answer:**
+"Hi is an informal greeting commonly used to say hello in casual conversations."
 
 **Sources:** Merriam-Webster, Britannica
 **Confidence:** 0.91
 
 ---
 
-## 🔐 Security Note
+## 💼 Resume Description
 
-API keys are stored using environment variables and are **not exposed in the codebase**.
-
----
-
-## 💼 Resume Line
-
-> Built a modern AI-powered search system with hybrid retrieval and LLM-based answer generation using React, TypeScript, and API integration.
+> Built an AI-powered search system using hybrid retrieval and LLM-based answer generation with React, TypeScript, and API integration.
 
 ---
 
 ## 📌 Future Improvements
 
-* 🔹 Personalized search results
-* 🔹 Voice-based search
-* 🔹 Multi-modal search (images/videos)
-* 🔹 Vector database integration
+* Vector database integration (FAISS / Pinecone)
+* Personalized search ranking
+* Multi-modal search (image/video)
+* Streaming AI responses
 
 ---
 
