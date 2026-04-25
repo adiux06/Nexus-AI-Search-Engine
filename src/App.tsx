@@ -150,6 +150,10 @@ export default function App() {
     const searchTerm = manualQuery || query;
     if (!searchTerm.trim()) return;
 
+    if (manualQuery) {
+      setQuery(manualQuery);
+    }
+
     setShowSuggestions(false); // Hide suggestions when searching
     setIsSearching(true);
     setAiAnswer(null);

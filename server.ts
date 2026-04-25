@@ -1,10 +1,8 @@
 import { GoogleGenAI as PrimarySearchClient } from '@google/genai';
 import dotenv from 'dotenv';
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import net from 'net';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { fileURLToPath } from 'url';
 import { documents, type Document } from './src/data/documents';
 import { cosineSimilarity, generateMockEmbedding } from './src/lib/semanticSearch';
@@ -543,48 +541,54 @@ export async function searchLiveWeb(query: string): Promise<LiveSearchResponse> 
   }
 }
 
+export const app = express();
+app.use(express.json());
+
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'NexusAI Engine v0.0.1 Online', environment: process.env.NODE_ENV || 'development' });
+});
+
+app.get('/api/suggest', async (req, res) => {
+  const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  if (!query) {
+    res.json([]);
+    return;
+  }
+  try {
+    const response = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`);
+    const data = await response.json();
+    res.json(data[1] || []);
+  } catch (error) {
+    console.error('Suggestion fetch failed:', error);
+    res.json([]);
+  }
+});
+
+app.post('/api/search', async (req, res) => {
+  const query = typeof req.body?.query === 'string' ? req.body.query.trim() : '';
+
+  if (!query) {
+    res.status(400).json({ error: 'A search query is required.' });
+    return;
+  }
+
+  try {
+    const results = await searchLiveWeb(query);
+    res.json(results);
+  } catch (error) {
+    console.error('Unhandled search error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 async function startServer() {
-  const app = express();
   const preferredPort = Number(process.env.PORT || 3000);
   const preferredHmrPort = Number(process.env.HMR_PORT || 24678);
   const port = await findAvailablePort(preferredPort);
 
-  app.use(express.json());
-
-  app.get('/api/status', (req, res) => {
-    res.json({ status: 'NexusAI Engine v0.0.1 Online', environment: process.env.NODE_ENV || 'development' });
-  });
-
-  app.get('/api/suggest', async (req, res) => {
-    const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
-    if (!query) {
-      res.json([]);
-      return;
-    }
-    try {
-      const response = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      res.json(data[1] || []);
-    } catch (error) {
-      console.error('Suggestion fetch failed:', error);
-      res.json([]);
-    }
-  });
-
-  app.post('/api/search', async (req, res) => {
-    const query = typeof req.body?.query === 'string' ? req.body.query.trim() : '';
-
-    if (!query) {
-      res.status(400).json({ error: 'A search query is required.' });
-      return;
-    }
-
-    const results = await searchLiveWeb(query);
-    res.json(results);
-  });
-
   if (process.env.NODE_ENV !== 'production') {
     const hmrPort = await findAvailablePort(preferredHmrPort, '127.0.0.1');
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
