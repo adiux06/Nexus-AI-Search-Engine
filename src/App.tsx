@@ -233,7 +233,7 @@ export default function App() {
       <ThemeEffects isDarkTheme={isDarkTheme} />
 
       {/* Header */}
-      <header className="absolute top-0 w-full z-50 bg-transparent">
+      <header className={`sticky top-0 w-full z-50 transition-all duration-300 ${isScrolled ? (isDarkTheme ? 'bg-gray-900/80 backdrop-blur-md border-b border-gray-800/50' : 'bg-white/80 backdrop-blur-md border-b border-gray-200/50') : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.reload()}>
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -247,15 +247,36 @@ export default function App() {
             </div>
           </div>
 
-          <nav className="flex items-center">
-            <button className="px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
+          <nav className="flex items-center gap-2 sm:gap-4">
+            <button 
+              onClick={() => setIsDarkTheme(!isDarkTheme)}
+              className={`p-2 rounded-full transition-all hover:scale-110 ${isDarkTheme ? 'text-gray-300 hover:text-blue-400 hover:bg-gray-800' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
+              title="Toggle Theme"
+            >
+              {isDarkTheme ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button 
+              onClick={() => setShowSettings(!showSettings)}
+              className={`p-2 rounded-full transition-all hover:scale-110 ${isDarkTheme ? 'text-gray-300 hover:text-blue-400 hover:bg-gray-800' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
+              title="Settings"
+            >
+              <Settings size={20} />
+            </button>
+            <button 
+              className={`hidden sm:block p-2 rounded-full transition-all hover:scale-110 ${isDarkTheme ? 'text-gray-300 hover:text-blue-400 hover:bg-gray-800' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-100'}`}
+              title="Help"
+            >
+              <HelpCircle size={20} />
+            </button>
+            <div className={`w-px h-6 mx-1 sm:mx-2 ${isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'}`} />
+            <button className="px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
               Sign In
             </button>
           </nav>
         </div>
       </header>
 
-      <main className="relative max-w-7xl mx-auto px-4 pt-28 pb-32 z-10">
+      <main className="relative max-w-7xl mx-auto px-4 pt-8 pb-32 z-10">
         {/* Search Hero Area */}
         <section className="max-w-3xl mx-auto space-y-8">
           <div className="text-center space-y-4 mb-12">
@@ -728,47 +749,6 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Floating Controls Dock (Auto-hiding on scroll) */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[400px] h-24 z-50 group flex justify-center">
-        {/* Peek Indicator */}
-        <div className={`absolute top-2 w-12 h-1.5 rounded-full transition-all duration-300 ${
-          isScrolled ? 'opacity-100 translate-y-0 group-hover:opacity-0 group-hover:-translate-y-4' : 'opacity-0 -translate-y-4'
-        } ${isDarkTheme ? 'bg-gray-700/50' : 'bg-gray-300/80'}`} />
-        
-        {/* Dock Content */}
-        <div 
-          className={`absolute top-6 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] px-8 py-3.5 rounded-full flex items-center gap-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-2xl border ${
-            isScrolled 
-              ? '-translate-y-24 opacity-0 scale-95 group-hover:scale-100 group-hover:translate-y-0 group-hover:opacity-100' 
-              : 'translate-y-0 opacity-100 scale-100'
-          } ${
-            isDarkTheme 
-              ? 'bg-gray-800/80 border-gray-700/50 text-gray-300 shadow-[0_8px_30px_rgba(0,0,0,0.4)]' 
-              : 'bg-white/80 border-gray-200/50 text-gray-700'
-          }`}
-        >
-          <button 
-            onClick={() => setIsDarkTheme(!isDarkTheme)}
-            className={`flex items-center gap-2 text-sm font-medium transition-all hover:scale-110 hover:text-blue-500`}
-          >
-            {isDarkTheme ? <Sun size={20} /> : <Moon size={20} />}
-            <span className="hidden sm:inline font-semibold tracking-wide">{isDarkTheme ? 'Light' : 'Dark'}</span>
-          </button>
-          <div className={`w-[2px] h-5 rounded-full ${isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'}`} />
-          <button 
-            onClick={() => setShowSettings(!showSettings)}
-            className={`flex items-center gap-2 text-sm font-medium transition-all hover:scale-110 hover:text-blue-500`}
-          >
-            <Settings size={20} />
-            <span className="hidden sm:inline font-semibold tracking-wide">Settings</span>
-          </button>
-          <div className={`w-[2px] h-5 rounded-full ${isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'}`} />
-          <button className={`flex items-center gap-2 text-sm font-medium transition-all hover:scale-110 hover:text-blue-500`}>
-            <HelpCircle size={20} />
-            <span className="hidden sm:inline font-semibold tracking-wide">Help</span>
-          </button>
-        </div>
-      </div>
       </div>
     </>
   );
