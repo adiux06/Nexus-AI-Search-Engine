@@ -3,6 +3,7 @@ import { Search, Sparkles, History, Globe, Zap, Database, Cpu, ChevronRight, Ext
 import { motion, AnimatePresence } from 'motion/react';
 import { getLiveSearchResults, SearchResult, getFavicon } from './lib/search';
 import { ThemeEffects } from './components/ThemeEffects';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function App() {
   const [query, setQuery] = useState('');
@@ -770,6 +771,7 @@ export default function App() {
         </div>
       </div>
       </div>
+      <Analytics />
     </>
   );
 }
