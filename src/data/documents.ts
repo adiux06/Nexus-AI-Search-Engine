@@ -1,4 +1,4 @@
-import { generateMockEmbedding } from '../lib/semanticSearch';
+import { generateMockEmbedding } from '../lib/semanticSearch.js';
 
 export interface Document {
   id: string;

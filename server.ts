@@ -4,8 +4,8 @@ import express from 'express';
 import net from 'net';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { documents, type Document } from './src/data/documents';
-import { cosineSimilarity, generateMockEmbedding } from './src/lib/semanticSearch';
+import { documents, type Document } from './src/data/documents.js';
+import { cosineSimilarity, generateMockEmbedding } from './src/lib/semanticSearch.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

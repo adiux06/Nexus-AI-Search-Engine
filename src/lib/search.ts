@@ -1,4 +1,4 @@
-import type { Document } from '../data/documents';
+import type { Document } from '../data/documents.js';
 
 export interface SearchResult extends Partial<Document> {
   id: string;
