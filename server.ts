@@ -1,4 +1,3 @@
-import { GoogleGenAI as PrimarySearchClient } from '@google/genai';
 import dotenv from 'dotenv';
 import express from 'express';
 import net from 'net';
@@ -10,14 +9,25 @@ import { cosineSimilarity, generateMockEmbedding } from './src/lib/semanticSearc
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: '.env.local' });
 dotenv.config();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const EXA_API_KEY = process.env.EXA_API_KEY || '';
-const GEMINI_LIVE_SEARCH_MODEL = 'gemini-2.5-flash';
+console.log("OPENROUTER KEY:", process.env.OPENROUTER_API_KEY);
+console.log("EXA KEY:", process.env.EXA_API_KEY);
+
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const EXA_API_KEY = process.env.EXA_API_KEY;
+
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 
+if (!OPENROUTER_API_KEY) {
+  console.error("❌ OPENROUTER_API_KEY is missing! Check your .env file.");
+}
+
+if (!EXA_API_KEY) {
+  console.warn("⚠️ EXA_API_KEY is missing (backup search may fail).");
+}
+
+  
 interface SearchResult extends Partial<Document> {
   id: string;
   title: string;
@@ -66,7 +76,6 @@ class SearchApiError extends Error {
   }
 }
 
-const primaryClient = GEMINI_API_KEY ? new PrimarySearchClient({ apiKey: GEMINI_API_KEY }) : null;
 const searchCache = new Map<string, { expiresAt: number; value: LiveSearchResponse }>();
 const pendingSearches = new Map<string, Promise<LiveSearchResponse>>();
 
@@ -180,6 +189,30 @@ function getFavicon(url: string): string | undefined {
 }
 
 export { getFavicon };
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return 'Recently';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Recently';
+    
+    const now = new Date();
+    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+    
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  } catch {
+    return 'Recently';
+  }
+}
 
 function localHybridSearch(query: string, corpus: Document[], limit = 5): SearchResult[] {
   const queryEmbedding = generateMockEmbedding(query);
@@ -306,19 +339,21 @@ function buildProviderFallbackNotice(reason: string): string {
 }
 
 function cleanExaSnippet(text: string): string {
+  if (!text) return '';
   // Remove markdown bold/italic characters
   let cleaned = text.replace(/[*_]/g, '');
-  // Remove empty brackets or excessive markdown artifacts
+  // Remove various markdown/web artifacts
   cleaned = cleaned.replace(/\[\.\.\.\]/g, ' ');
   cleaned = cleaned.replace(/\[…\]/g, ' ');
   cleaned = cleaned.replace(/\[edit\]/gi, '');
-  // Remove newlines so the text flows as a single paragraph
+  cleaned = cleaned.replace(/&[a-z]+;/gi, ' '); // HTML entities
+  // Remove URLs
+  cleaned = cleaned.replace(/https?:\/\/\S+/gi, '');
+  // Remove newlines and excessive whitespace
   cleaned = cleaned.replace(/[\r\n]+/g, ' ');
-  // Clean up excessive whitespace
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
   
-  if (!cleaned) return '';
-  return cleaned.length > 250 ? cleaned.substring(0, 250) + '...' : cleaned;
+  return cleaned.length > 280 ? cleaned.substring(0, 280) + '...' : cleaned;
 }
 
 function buildAnswerFromResults(query: string, results: SearchResult[]): string {
@@ -336,7 +371,7 @@ function buildAnswerFromResults(query: string, results: SearchResult[]): string 
     .join('\n\n');
 
   if (context) {
-    return `**⚠️ AI Generation Unavailable:**\n*(The Gemini LLM key is missing, so the system cannot synthesize a human-readable answer. Displaying raw aggregated context instead.)*\n\n**Extracted Context:**\n${context}`;
+    return `Here are the top results related to "${query}":\n\n${context}`;
   }
 
   const titles = results
@@ -401,7 +436,7 @@ async function searchWithBackupProvider(query: string): Promise<LiveSearchRespon
           url: result.url || '#',
           snippet: result.highlights?.[0] || result.summary || result.title || '',
           content: siteSummary,
-          date: result.publishedDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+          date: formatDate(result.publishedDate),
           category: 'technology',
           score,
           semanticScore: score,
@@ -424,76 +459,105 @@ async function searchWithBackupProvider(query: string): Promise<LiveSearchRespon
   }
 }
 
-async function searchWithPrimaryProvider(query: string): Promise<LiveSearchResponse> {
-  if (!primaryClient) {
-    throw new SearchApiError(getPrimaryFallbackReason());
-  }
-
+async function searchWithPrimaryProvider(query: string) {
   try {
-    const prompt = `You are an intelligent search assistant.
+    console.log(`🔍 [Primary] Searching for: "${query}"`);
 
-Write a clear, concise answer (2–3 sentences).
+    // ✅ Step 1: get search results FIRST
+    const backupData = await searchWithBackupProvider(query);
+
+    if (!backupData.results || backupData.results.length === 0) {
+      console.log("⚠️ No backup results found for context.");
+      return backupData;
+    }
+
+    // ✅ Step 2: build context
+    const context = backupData.results
+      .slice(0, 4)
+      .map((r, i) => `[Source ${i+1}]: ${r.title}\nContent: ${r.content || r.snippet}`)
+      .join("\n\n");
+
+    // ✅ Step 3: call OpenRouter with a more reliable model
+    console.log("🤖 Calling OpenRouter AI...");
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://nexusai.search",
+        "X-Title": "NexusAI"
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.0-flash-001",
+        messages: [
+          {
+            role: "user",
+            content: `
+You are an expert AI assistant.
+
+Write a complete and clear answer.
 
 Rules:
+- Give a FULL explanation (not partial)
+- Combine all sources into one paragraph
+- Do NOT list bullet points
 - Do NOT copy raw text
-- Combine all information into ONE explanation
-- Avoid repetition
-- Use simple, natural language
-- If multiple meanings exist, give the most common one first
+- Explain like a human teacher
+- Ensure answer feels complete
+
+Context:
+${context}
 
 Question:
 ${query}
 
-Answer:`;
-
-    const response = await primaryClient.models.generateContent({
-      model: GEMINI_LIVE_SEARCH_MODEL,
-      contents: [{ parts: [{ text: prompt }] }],
-      config: {
-        tools: [{ googleSearch: {} }],
-        maxOutputTokens: 120,
-        thinkingConfig: {
-          thinkingBudget: 0,
-        },
-      },
+Answer:
+`
+          }
+        ],
+        temperature: 0.5,
+        max_tokens: 200
+      })
     });
 
-    const answer = response.text || '';
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ OpenRouter API error (${response.status}):`, errorText);
+      return {
+        ...backupData,
+        answer: "Unable to generate complete answer. Showing results below."
+      };
+    }
 
-    const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
-    const chunks = groundingMetadata?.groundingChunks || [];
+    const data = await response.json();
+    const aiAnswer = data.choices?.[0]?.message?.content;
 
-    const results: SearchResult[] = chunks
-      .filter((chunk) => chunk.web)
-      .map((chunk, index) => {
-        const url = chunk.web?.uri || '#';
+    if (!aiAnswer) {
+      console.warn("⚠️ OpenRouter returned no content in choices.");
+      return {
+        ...backupData,
+        answer: "Unable to generate complete answer. Showing results below."
+      };
+    }
 
-        return {
-          id: `gemini-${index}`,
-          title: chunk.web?.title || 'Search Result',
-          url,
-          snippet: chunk.web?.title || '',
-          content: `Live source: ${chunk.web?.title}`,
-          date: new Date().toISOString().split('T')[0],
-          category: 'technology',
-          score: 1,
-          semanticScore: 1,
-          keywordScore: 1,
-          isLive: true,
-          siteSummary: chunk.web?.title || 'Live web search result.',
-          favicon: getFavicon(url),
-        };
-      });
+    console.log("✅ AI Answer generated successfully.");
 
+    // ✅ Step 4: RETURN BOTH
     return {
-      results,
-      answer,
-      source: 'live',
-      provider: 'primary',
+      results: backupData.results,
+      answer: aiAnswer,
+      source: "live" as const,
+      provider: "primary" as const
     };
+
   } catch (error) {
-    console.error('Primary search failed:', error);
-    throw new SearchApiError(getPrimaryFallbackReason(error), getErrorStatus(error));
+    console.error("❌ searchWithPrimaryProvider failed:", error);
+    // Fallback to backup search results if AI fails completely
+    try {
+      return await searchWithBackupProvider(query);
+    } catch {
+      throw error;
+    }
   }
 }
 

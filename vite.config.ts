@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['fsevents'],
+    exclude: ['fsevents'],
   },
   build: {
     rollupOptions: {
