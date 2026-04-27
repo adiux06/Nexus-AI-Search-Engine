@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Sparkles, History, Globe, Zap, Database, Cpu, ChevronRight, ExternalLink, Filter, TrendingUp, Info, Settings, Sun, Moon, HelpCircle } from 'lucide-react';
+import { Search, Sparkles, History, Globe, Zap, Database, Cpu, ChevronRight, ExternalLink, Filter, TrendingUp, Info, Settings, Sun, Moon, HelpCircle, Github, Mail, Linkedin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getLiveSearchResults, SearchResult, getFavicon } from './lib/search';
 import { ThemeEffects } from './components/ThemeEffects';
@@ -730,25 +730,36 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="border-t border-gray-200/50 mt-20 py-12 px-4 bg-gradient-to-r from-gray-50 to-slate-50 relative z-10 pb-28">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2 opacity-50">
-            <Zap size={16} />
-            <span className="font-bold text-sm tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700">NexusAI Labs</span>
+      <footer className={`mt-20 border-t ${isDarkTheme ? 'bg-gray-900/50 border-gray-800' : 'bg-gray-50/50 border-gray-200'} backdrop-blur-xl relative z-10 py-12`}>
+        <div className="max-w-7xl mx-auto px-4 text-center space-y-6">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Zap size={20} className="text-white" />
+            </div>
+            <p className={`text-sm font-bold tracking-tight ${isDarkTheme ? 'text-gray-300' : 'text-gray-800'}`}>
+              © 2026 NexusAI Search. Intelligence in every discovery.
+            </p>
+            <p className={`text-xs ${isDarkTheme ? 'text-gray-500' : 'text-gray-500'}`}>
+              Privacy-centric search. Your data is processed securely and never stored.
+            </p>
           </div>
-          <div className="flex items-center gap-8 text-xs font-semibold text-gray-600 uppercase tracking-widest">
-            <a href="#" className="hover:text-blue-600 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Safety</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Terms</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">API</a>
+
+          <div className={`pt-6 border-t ${isDarkTheme ? 'border-gray-800/50' : 'border-gray-200/50'} max-w-xs mx-auto`}>
+            <p className={`text-xs font-semibold tracking-wide uppercase ${isDarkTheme ? 'text-blue-400' : 'text-blue-600'}`}>
+              Developed by <span className={isDarkTheme ? 'text-gray-100' : 'text-gray-900'}>Aditya Raj</span>
+            </p>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="p-2 text-gray-600 hover:text-blue-600 transition-colors border border-gray-300 rounded-lg hover:border-blue-300 hover:bg-blue-50">
-              <Globe size={18} />
-            </button>
-            <button className="p-2 text-gray-600 hover:text-blue-600 transition-colors border border-gray-300 rounded-lg hover:border-blue-300 hover:bg-blue-50">
-              <Filter size={18} />
-            </button>
+
+          <div className="flex items-center justify-center gap-4 pt-2">
+            <a href="https://github.com/adiux06" target="_blank" rel="noopener noreferrer" className={`p-2 rounded-lg transition-all ${isDarkTheme ? 'text-gray-400 hover:text-blue-400' : 'text-gray-500 hover:text-blue-600'}`}>
+              <Github size={18} />
+            </a>
+            <a href="https://www.linkedin.com/in/aditya-raj-97890b320/" target="_blank" rel="noopener noreferrer" className={`p-2 rounded-lg transition-all ${isDarkTheme ? 'text-gray-400 hover:text-blue-400' : 'text-gray-500 hover:text-blue-600'}`}>
+              <Linkedin size={18} />
+            </a>
+            <a href="mailto:coderadi08@gmail.com" className={`p-2 rounded-lg transition-all ${isDarkTheme ? 'text-gray-400 hover:text-blue-400' : 'text-gray-500 hover:text-blue-600'}`}>
+              <Mail size={18} />
+            </a>
           </div>
         </div>
       </footer>
