@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, User, Lock, ArrowRight, Zap } from 'lucide-react';
+import { useGoogleLogin } from '@react-oauth/google';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -33,13 +34,27 @@ export function LoginModal({ isOpen, isCompulsory, isDarkTheme, onClose, onLogin
     }, 1500);
   };
 
-  const handleGoogleLogin = () => {
-    setIsGoogleLoading(true);
-    // Mock Google login delay
-    setTimeout(() => {
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      console.log('Google login successful', tokenResponse);
       setIsGoogleLoading(false);
       onLoginSuccess();
-    }, 1500);
+    },
+    onError: (errorResponse) => {
+      console.error('Google login failed', errorResponse);
+      setError('Google login was cancelled or failed.');
+      setIsGoogleLoading(false);
+    },
+  });
+
+  const handleGoogleClick = () => {
+    setIsGoogleLoading(true);
+    loginWithGoogle();
+    
+    // Safety timeout in case popup gets blocked and onError doesn't fire immediately
+    setTimeout(() => {
+      setIsGoogleLoading(false);
+    }, 60000); // 1 minute timeout
   };
 
   return (
@@ -167,7 +182,8 @@ export function LoginModal({ isOpen, isCompulsory, isDarkTheme, onClose, onLogin
 
                 <div className="mt-6">
                   <button
-                    onClick={handleGoogleLogin}
+                    type="button"
+                    onClick={handleGoogleClick}
                     disabled={isLoading || isGoogleLoading}
                     className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-medium transition-all transform hover:scale-[1.02] disabled:opacity-70 disabled:hover:scale-100 border ${
                       isDarkTheme
