@@ -3,6 +3,7 @@ import { Search, Sparkles, History, Globe, Zap, Database, Cpu, ChevronRight, Ext
 import { motion, AnimatePresence } from 'motion/react';
 import { getLiveSearchResults, SearchResult, getFavicon } from './lib/search';
 import { ThemeEffects } from './components/ThemeEffects';
+import { LoginModal } from './components/LoginModal';
 
 export default function App() {
   const [query, setQuery] = useState('');
@@ -21,6 +22,12 @@ export default function App() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Auth & Usage State
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isLoginCompulsory, setIsLoginCompulsory] = useState(false);
+  const [usageCount, setUsageCount] = useState(0);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,6 +77,35 @@ export default function App() {
     const savedSearches = localStorage.getItem('nexusai-recent-searches');
     if (savedSearches) {
       setRecentSearches(JSON.parse(savedSearches));
+    }
+
+    // Load Auth and Usage stats
+    const loggedIn = localStorage.getItem('nexusai-logged-in') === 'true';
+    setIsLoggedIn(loggedIn);
+    
+    const count = parseInt(localStorage.getItem('nexusai-usage-count') || '0', 10);
+    setUsageCount(count);
+
+    const hasSeenInitial = localStorage.getItem('nexusai-initial-login-seen') === 'true';
+
+    if (!loggedIn) {
+      if (!hasSeenInitial) {
+        // Show initial optional login
+        const timer = setTimeout(() => {
+          setShowLoginModal(true);
+          setIsLoginCompulsory(false);
+          localStorage.setItem('nexusai-initial-login-seen', 'true');
+        }, 1500); // slight delay for better UX
+        
+        return () => {
+          window.removeEventListener('scroll', handleScroll);
+          clearTimeout(timer);
+        };
+      } else if (count >= 3) {
+        // Show compulsory login if they've used it 3 times
+        setShowLoginModal(true);
+        setIsLoginCompulsory(true);
+      }
     }
     
     return () => window.removeEventListener('scroll', handleScroll);
@@ -147,6 +183,14 @@ export default function App() {
 
   const handleSearch = async (e?: React.FormEvent, manualQuery?: string) => {
     if (e) e.preventDefault();
+    
+    // Enforce Usage Limits
+    if (!isLoggedIn && usageCount >= 3) {
+      setShowLoginModal(true);
+      setIsLoginCompulsory(true);
+      return;
+    }
+
     const searchTerm = manualQuery || query;
     if (!searchTerm.trim()) return;
 
@@ -176,6 +220,21 @@ export default function App() {
       setSearchSource(source);
       setSearchProvider(provider);
       setSearchTime(Math.round(performance.now() - startTime));
+
+      // Track usage for free users
+      if (!isLoggedIn) {
+        const newCount = usageCount + 1;
+        setUsageCount(newCount);
+        localStorage.setItem('nexusai-usage-count', newCount.toString());
+        
+        // Trigger modal if they just hit the limit
+        if (newCount >= 3) {
+          setTimeout(() => {
+            setShowLoginModal(true);
+            setIsLoginCompulsory(true);
+          }, 2000); // show after they see results briefly
+        }
+      }
     } catch (error) {
       console.error("Search failed:", error);
       setSearchNotice("Something went wrong while processing the search request.");
@@ -273,9 +332,33 @@ export default function App() {
               <HelpCircle size={20} />
             </button>
             <div className={`w-px h-6 mx-1 sm:mx-2 ${isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'}`} />
-            <button className="px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25">
-              Sign In
-            </button>
+            {isLoggedIn ? (
+              <button 
+                onClick={() => {
+                  setIsLoggedIn(false);
+                  localStorage.removeItem('nexusai-logged-in');
+                  setUsageCount(0);
+                  localStorage.setItem('nexusai-usage-count', '0');
+                }}
+                className={`px-4 sm:px-5 py-2 rounded-full border transition-all text-xs sm:text-sm font-semibold ${
+                  isDarkTheme 
+                    ? 'bg-gray-800/50 hover:bg-red-500/20 text-gray-300 hover:text-red-400 border-gray-700 hover:border-red-500/50' 
+                    : 'bg-gray-50/50 hover:bg-red-50 text-gray-600 hover:text-red-600 border-gray-200 hover:border-red-200'
+                }`}
+              >
+                Sign Out
+              </button>
+            ) : (
+              <button 
+                onClick={() => {
+                  setShowLoginModal(true);
+                  setIsLoginCompulsory(false);
+                }}
+                className="px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25"
+              >
+                Sign In
+              </button>
+            )}
           </nav>
         </div>
       </header>
@@ -763,6 +846,18 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      <LoginModal
+        isOpen={showLoginModal}
+        isCompulsory={isLoginCompulsory}
+        isDarkTheme={isDarkTheme}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={() => {
+          setIsLoggedIn(true);
+          setShowLoginModal(false);
+          localStorage.setItem('nexusai-logged-in', 'true');
+        }}
+      />
 
       </div>
     </>
