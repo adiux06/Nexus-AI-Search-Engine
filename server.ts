@@ -11,16 +11,16 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-console.log("OPENROUTER KEY:", process.env.OPENROUTER_API_KEY);
+console.log("GROQ KEY:", process.env.GROQ_API_KEY);
 console.log("EXA KEY:", process.env.EXA_API_KEY);
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const EXA_API_KEY = process.env.EXA_API_KEY;
 
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 
-if (!OPENROUTER_API_KEY) {
-  console.error("❌ OPENROUTER_API_KEY is missing! Check your .env file.");
+if (!GROQ_API_KEY) {
+  console.error("❌ GROQ_API_KEY is missing! Check your .env file.");
 }
 
 if (!EXA_API_KEY) {
@@ -478,17 +478,15 @@ async function searchWithPrimaryProvider(query: string) {
       .join("\n\n");
 
     // ✅ Step 3: call OpenRouter with a more reliable model
-    console.log("🤖 Calling OpenRouter AI...");
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    console.log("🤖 Calling Groq AI...");
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://nexusai.search",
-        "X-Title": "NexusAI"
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
+        model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "user",
@@ -522,7 +520,7 @@ Answer:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ OpenRouter API error (${response.status}):`, errorText);
+      console.error(`❌ Groq API error (${response.status}):`, errorText);
       return {
         ...backupData,
         answer: "Unable to generate complete answer. Showing results below."
@@ -533,7 +531,7 @@ Answer:
     const aiAnswer = data.choices?.[0]?.message?.content;
 
     if (!aiAnswer) {
-      console.warn("⚠️ OpenRouter returned no content in choices.");
+      console.warn("⚠️ Groq returned no content in choices.");
       return {
         ...backupData,
         answer: "Unable to generate complete answer. Showing results below."

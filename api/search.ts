@@ -5,7 +5,7 @@ import { cosineSimilarity, generateMockEmbedding } from '../src/lib/semanticSear
 
 dotenv.config();
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const EXA_API_KEY = process.env.EXA_API_KEY;
 
 interface SearchResult extends Partial<Document> {
@@ -132,16 +132,14 @@ async function searchWithPrimaryProvider(query: string): Promise<LiveSearchRespo
     const backupData = await searchWithBackupProvider(query);
     if (!backupData.results || backupData.results.length === 0) return backupData;
     const context = backupData.results.slice(0, 4).map((r, i) => `[Source ${i+1}]: ${r.title}\nContent: ${r.content || r.snippet}`).join("\n\n");
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://nexusai.search",
-        "X-Title": "NexusAI"
+        "Authorization": `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
+        model: "llama-3.3-70b-versatile",
         messages: [{
           role: "user",
           content: `You are an expert AI assistant.\n\nWrite a complete and clear answer.\n\nRules:\n- Give a FULL explanation (not partial)\n- Combine all sources into one paragraph\n- Do NOT list bullet points\n- Do NOT copy raw text\n- Explain like a human teacher\n- Ensure answer feels complete\n\nContext:\n${context}\n\nQuestion:\n${query}\n\nAnswer:\n`
